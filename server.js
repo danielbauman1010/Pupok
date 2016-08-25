@@ -1,8 +1,77 @@
+/**
+ * Module dependencies
+ */
+
+var express = require('express');
+var app = express();
+app.listen(3000)
+var fs = require('fs');
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+
+var imgPath = 'gg.jpg';
+
+
+mongoose.connect('localhost', 'testing_storeImg');
+
+
+var schema = new Schema({
+    img: { data: Buffer, contentType: String }
+});
+
+
+var A = mongoose.model('A', schema);
+
+mongoose.connection.on('open', function () {
+  console.log('mongo is open');
+
+  A.remove(function (err) {
+    console.log('removed old docs');
+
+
+    var a = new A;
+    a.img.data = fs.readFileSync(imgPath);
+    a.img.contentType = 'image/jpg';
+    a.save(function (err, a) {
+
+
+      console.log('saved img to mongo');
+
+      // start a demo server
+      app.get('/', function (req, res, next) {
+        A.findById(a, function (err, doc) {
+
+          res.contentType(doc.img.contentType);
+          res.send(doc.img.data);
+        });
+      });
+
+      app.on('close', function () {
+        console.log('dropping db');
+        mongoose.connection.db.dropDatabase(function () {
+          console.log('closing db connection');
+          mongoose.connection.close();
+        });
+      });
+
+      app.listen(3300, function (err) {
+
+        console.log('press CTRL+C to exit');
+      });
+
+
+    });
+  });
+
+});
+
 /*var express = require('express'),
   app = express(),
   MongoClient = require('mongodb').MongoClient,
   assert = require('assert');
 */
+/*
   var express = require('express')
   var bodyParser = require('body-parser')
   var app = express()
@@ -59,14 +128,14 @@ newUser.save(function(err) {
   console.log('User created!');
 });
 });
-
+*/
 //new JwtStrategy(options, verify)
 
 /*MongoClient.connect('mongodb://localhost:27017', function(err,db) {
 
   assert.equal(null,err)
   console.log("gog")
-  app.get('/', function(req,res) {
+  0app.get('/', function(req,res) {
     db.collections('users').find({}).toArray(function(err,docs){
       res.render('users', {'users':docs});
 
